@@ -552,8 +552,11 @@ class Worker(WorkerBase):
             VLLMModelTracker.register_model(
                 ENGINE_NAME, self.model_runner.get_model()
             )
-        except Exception:
-            pass
+            logger.info("Registered model in VLLMModelTracker as '%s'",
+                        ENGINE_NAME)
+        except Exception as e:
+            logger.warning("Failed to register model in VLLMModelTracker: "
+                           "%s: %s", type(e).__name__, e)
 
         # Init kv cache connector here, because it requires
         # `kv_cache_config`.
