@@ -539,6 +539,22 @@ class Worker(WorkerBase):
         # so that it's available to the warmup stage.
         self.cache_config.num_gpu_blocks = kv_cache_config.num_blocks
 
+        # Register model in LMCache's VLLMModelTracker for CacheBlend.
+        # Must happen before ensure_kv_transfer_initialized(), which
+        # creates the KV connector that needs the model for blending.
+        try:
+            from lmcache.v1.compute.models.utils import VLLMModelTracker
+
+            from vllm.distributed.kv_transfer.kv_connector.v1.lmcache_integration.utils import (
+                ENGINE_NAME,
+            )
+
+            VLLMModelTracker.register_model(
+                ENGINE_NAME, self.model_runner.get_model()
+            )
+        except Exception:
+            pass
+
         # Init kv cache connector here, because it requires
         # `kv_cache_config`.
         # NOTE(Kuntai): This need to be done before `initialize_kv_cache`,
