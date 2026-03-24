@@ -542,18 +542,17 @@ class Worker(WorkerBase):
         # Register model in LMCache's VLLMModelTracker for CacheBlend.
         # Must happen before ensure_kv_transfer_initialized(), which
         # creates the KV connector that needs the model for blending.
+        # Note: We hardcode "vllm-instance" instead of importing
+        # ENGINE_NAME from lmcache_integration.utils to avoid triggering
+        # a transitive ImportError (LMCacheEngineMetadata) that occurs
+        # due to version mismatch between vLLM and LMCache.
         try:
             from lmcache.v1.compute.models.utils import VLLMModelTracker
 
-            from vllm.distributed.kv_transfer.kv_connector.v1.lmcache_integration.utils import (
-                ENGINE_NAME,
-            )
-
             VLLMModelTracker.register_model(
-                ENGINE_NAME, self.model_runner.get_model()
+                "vllm-instance", self.model_runner.get_model()
             )
-            logger.info("Registered model in VLLMModelTracker as '%s'",
-                        ENGINE_NAME)
+            logger.info("Registered model in VLLMModelTracker")
         except Exception as e:
             logger.warning("Failed to register model in VLLMModelTracker: "
                            "%s: %s", type(e).__name__, e)
